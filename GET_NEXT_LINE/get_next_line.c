@@ -6,7 +6,7 @@
 /*   By: hsachie <hsachie@student.42.jp>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 12:11:54 by hsachie           #+#    #+#             */
-/*   Updated: 2026/06/28 18:37:50 by hsachie          ###   ########.fr       */
+/*   Updated: 2026/06/28 18:47:00 by hsachie          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,14 +58,20 @@ char *get_next_line(int fd)
 	ret.str = NULL;
 	ret.len = 0;
 	ret.capa = 0;
-	while(1)
+
+	while (1)
+	{
 		c = ft_getc(fd);
-	if(c == EOF)
-		break;
-	ft_putc(&ret, c)
-	if(c == '\n')
-		break;
-	if(ret.len > 0)
+		if (c == EOF)
+			break;
+
+		ft_putc(&ret, c);
+
+		if (c == '\n')
+			break;
+	}
+	if (ret.len > 0)
 		ft_putc(&ret, '\0');
-	retuen ret.str;
+
+	return ret.str;
 }

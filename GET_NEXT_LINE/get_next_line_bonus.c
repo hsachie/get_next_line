@@ -6,7 +6,7 @@
 /*   By: hsachie <hsachie@student.42.jp>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/29 12:44:00 by hsachie           #+#    #+#             */
-/*   Updated: 2026/07/01 19:20:12 by hsachie          ###   ########.fr       */
+/*   Updated: 2026/07/01 20:19:26 by hsachie          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,26 +14,23 @@
 
 int	ft_getc(int fd)
 {
-	static char	buf[OPEN_MAX][BUFFER_SIZE];
-	static char	*bufp[OPEN_MAX];
-	static int	n[OPEN_MAX];
+	static t_buf	bufs[OPEN_MAX];
 
 	if (fd < 0 || fd >= OPEN_MAX)
 		return (EOF);
-	if (n[fd] == 0)
+	if (bufs[fd].n == 0)
 	{
-		n[fd] = read(fd, buf[fd].buf, BUFFER_SIZE);
-		bufp[fd] = buf[fd];
-		if (n[fd] <= 0)
+		bufs[fd].n = read(fd, bufs[fd].buf, BUFFER_SIZE);
+		bufs[fd].bufp = bufs[fd].buf;
+		if (bufs[fd].n <= 0)
 		{
-			n[fd] = 0;
+			bufs[fd].n = 0;
 			return (EOF);
 		}
 	}
-	if (--n >= 0)
-	{
-		return ((unsigned char)*bufp++);
-	}
+	--bufs[fd].n;
+	if (bufs[fd].n >= 0)
+		return ((unsigned char)*bufs[fd].bufp++);
 	return (EOF);
 }
 
@@ -83,7 +80,11 @@ char	*get_next_line(int fd)
 		if (c == '\n')
 			break ;
 	}
-	if (ret.len > 0)
-		ft_putc(&ret, '\0');
+	if (ret.len == 0)
+	{
+		free(ret.str);
+		return (NULL);
+	}
+	ft_putc(&ret, '\0');
 	return ((char *)ret.str);
 }

@@ -6,7 +6,7 @@
 /*   By: hsachie <hsachie@student.42.jp>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 12:11:58 by hsachie           #+#    #+#             */
-/*   Updated: 2026/07/01 18:48:53 by hsachie          ###   ########.fr       */
+/*   Updated: 2026/07/01 19:54:38 by hsachie          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,13 +23,6 @@
 # ifndef EOF
 #  define EOF -1
 # endif
-
-typedef struct s_buf
-{
-	char			buf[BUFFER_SIZE];
-	char			*bufp;
-	int				n;
-}					t_buf;
 
 typedef struct s_string
 {

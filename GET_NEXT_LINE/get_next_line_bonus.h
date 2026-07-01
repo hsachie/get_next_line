@@ -6,7 +6,7 @@
 /*   By: hsachie <hsachie@student.42.jp>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/29 12:44:33 by hsachie           #+#    #+#             */
-/*   Updated: 2026/07/01 19:19:17 by hsachie          ###   ########.fr       */
+/*   Updated: 2026/07/01 19:54:51 by hsachie          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,13 @@
 # ifndef OPEN_MAX
 #  define OPEN_MAX 1024
 # endif
+
+typedef struct s_buf
+{
+	char			buf[BUFFER_SIZE];
+	char			*bufp;
+	int				n;
+}					t_buf;
 
 typedef struct s_string
 {

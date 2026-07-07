@@ -6,7 +6,7 @@
 /*   By: hsachie <hsachie@student.42.jp>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 12:11:58 by hsachie           #+#    #+#             */
-/*   Updated: 2026/07/01 19:54:38 by hsachie          ###   ########.fr       */
+/*   Updated: 2026/07/07 21:56:44 by hsachie          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,11 @@
 # endif
 
 # ifndef EOF
-#  define EOF -1
+#  define EOF (-1)
+# endif
+
+# ifndef GNL_ERR
+#  define GNL_ERR (-2)
 # endif
 
 typedef struct s_string
@@ -29,11 +33,11 @@ typedef struct s_string
 	unsigned char	*str;
 	size_t			len;
 	size_t			capa;
-}					t_string;
+}	t_string;
 
-void				*ft_memcpy(void *dest, const void *src, size_t n);
-int					getchar(void);
-int					ft_putc(t_string *str, unsigned char c);
-char				*get_next_line(int fd);
+char	*get_next_line(int fd);
+int		ft_getc(int fd);
+int		ft_putc(t_string *str, unsigned char c);
+void	*ft_memcpy(void *dst, const void *src, size_t n);
 
 #endif

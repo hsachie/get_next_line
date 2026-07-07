@@ -6,7 +6,7 @@
 /*   By: hsachie <hsachie@student.42.jp>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/29 12:44:00 by hsachie           #+#    #+#             */
-/*   Updated: 2026/07/01 20:19:26 by hsachie          ###   ########.fr       */
+/*   Updated: 2026/07/07 22:40:00 by hsachie          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,20 +18,20 @@ int	ft_getc(int fd)
 
 	if (fd < 0 || fd >= OPEN_MAX)
 		return (EOF);
-	if (bufs[fd].n == 0)
+	if (bufs[fd].n <= 0)
 	{
 		bufs[fd].n = read(fd, bufs[fd].buf, BUFFER_SIZE);
-		bufs[fd].bufp = bufs[fd].buf;
-		if (bufs[fd].n <= 0)
+		bufs[fd].idx = 0;
+		if (bufs[fd].n < 0)
 		{
 			bufs[fd].n = 0;
-			return (EOF);
+			return (GNL_ERR);
 		}
+		if (bufs[fd].n == 0)
+			return (EOF);
 	}
-	--bufs[fd].n;
-	if (bufs[fd].n >= 0)
-		return ((unsigned char)*bufs[fd].bufp++);
-	return (EOF);
+	bufs[fd].n--;
+	return ((unsigned char)bufs[fd].buf[bufs[fd].idx++]);
 }
 
 int	ft_putc(t_string *str, unsigned char c)
@@ -47,11 +47,7 @@ int	ft_putc(t_string *str, unsigned char c)
 			new_capa = str->capa * 2;
 		new_str = malloc(new_capa);
 		if (new_str == NULL)
-		{
-			free(str->str);
-			*str = (t_string){NULL, 0, 0};
-			return (-1);
-		}
+			return (free(str->str), -1);
 		if (str->len > 0)
 			ft_memcpy(new_str, str->str, str->len);
 		free(str->str);
@@ -67,24 +63,25 @@ char	*get_next_line(int fd)
 	t_string	ret;
 	int			c;
 
+	if (fd < 0 || fd >= OPEN_MAX || BUFFER_SIZE <= 0)
+		return (NULL);
 	ret.str = NULL;
 	ret.len = 0;
 	ret.capa = 0;
-	while (1)
+	c = ft_getc(fd);
+	while (c != EOF && c != GNL_ERR)
 	{
-		c = ft_getc(fd);
-		if (c == EOF)
-			break ;
-		if (ft_putc(&ret, c) == -1)
+		if (ft_putc(&ret, (unsigned char)c) == -1)
 			return (NULL);
 		if (c == '\n')
 			break ;
+		c = ft_getc(fd);
 	}
+	if (c == GNL_ERR)
+		return (free(ret.str), NULL);
 	if (ret.len == 0)
-	{
-		free(ret.str);
+		return (free(ret.str), NULL);
+	if (ft_putc(&ret, '\0') == -1)
 		return (NULL);
-	}
-	ft_putc(&ret, '\0');
 	return ((char *)ret.str);
 }

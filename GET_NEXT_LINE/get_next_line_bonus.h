@@ -6,7 +6,7 @@
 /*   By: hsachie <hsachie@student.42.jp>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/29 12:44:33 by hsachie           #+#    #+#             */
-/*   Updated: 2026/07/01 19:54:51 by hsachie          ###   ########.fr       */
+/*   Updated: 2026/07/07 22:40:00 by hsachie          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,11 @@
 # endif
 
 # ifndef EOF
-#  define EOF -1
+#  define EOF (-1)
+# endif
+
+# ifndef GNL_ERR
+#  define GNL_ERR (-2)
 # endif
 
 # ifndef OPEN_MAX
@@ -31,8 +35,8 @@
 
 typedef struct s_buf
 {
-	char			buf[BUFFER_SIZE];
-	char			*bufp;
+	unsigned char	buf[BUFFER_SIZE];
+	int				idx;
 	int				n;
 }					t_buf;
 
@@ -45,6 +49,7 @@ typedef struct s_string
 
 void				*ft_memcpy(void *dest, const void *src, size_t n);
 int					ft_putc(t_string *str, unsigned char c);
+int					ft_getc(int fd);
 char				*get_next_line(int fd);
 
 #endif

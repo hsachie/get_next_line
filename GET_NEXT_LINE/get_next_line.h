@@ -6,7 +6,7 @@
 /*   By: hsachie <hsachie@student.42.jp>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 12:11:58 by hsachie           #+#    #+#             */
-/*   Updated: 2026/07/07 21:56:44 by hsachie          ###   ########.fr       */
+/*   Updated: 2026/07/13 18:35:58 by hsachie          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,11 +21,11 @@
 # endif
 
 # ifndef EOF
-#  define EOF (-1)
+#  define EOF -1
 # endif
 
 # ifndef GNL_ERR
-#  define GNL_ERR (-2)
+#  define GNL_ERR -2
 # endif
 
 typedef struct s_string

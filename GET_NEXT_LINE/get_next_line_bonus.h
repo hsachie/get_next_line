@@ -6,7 +6,7 @@
 /*   By: hsachie <hsachie@student.42.jp>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/29 12:44:33 by hsachie           #+#    #+#             */
-/*   Updated: 2026/07/07 22:40:00 by hsachie          ###   ########.fr       */
+/*   Updated: 2026/07/13 18:38:08 by hsachie          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,11 +22,11 @@
 # endif
 
 # ifndef EOF
-#  define EOF (-1)
+#  define EOF -1
 # endif
 
 # ifndef GNL_ERR
-#  define GNL_ERR (-2)
+#  define GNL_ERR -2
 # endif
 
 # ifndef OPEN_MAX

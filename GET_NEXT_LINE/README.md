@@ -2,168 +2,149 @@
 
 # get_next_line
 
-static変数を使ったバッファリングにより、ファイルディスクリプタから1行ずつ読み込むC言語の関数です。
-
-***
-
 ## 概要
 
-`get_next_line` は呼び出すたびに、ファイルディスクリプタから改行文字を含む1行を返します。K&Rの `getchar` 実装を参考にした内部バッファリングにより、`read` システムコールの呼び出し回数を最小限に抑えています。
+`get_next_line` は、与えられたファイルディスクリプタから改行 (`\n`) までの
+1文字ずつを読み込み、1行分の文字列として返す関数です。
+繰り返し呼び出すことで、ファイルの内容を先頭から1行ずつ順番に取得できます。
 
-## 関数プロトタイプ
 
-```c
-char *get_next_line(int fd);
-```
+| 戻り値 | 条件 |
+|---|---|
+| 読み込んだ1行（改行文字 `\n` を含む） | 正常時 |
+| NULL | 読み込むものがない・ファイル終端・read()エラー時 |
 
-**戻り値：** 次の1行を含むnull終端文字列。EOFまたはエラー時は `NULL`。返された文字列は呼び出し側で `free` する必要があります。
-
-***
-
-## ファイル構成
+## ディレクトリ構成
 
 ```
-get_next_line.h              ← 通常版ヘッダー
-get_next_line.c              ← ft_getc / ft_putc / get_next_line
-get_next_line_utils.c        ← ft_memcpy
-
-get_next_line_bonus.h        ← ボーナス版ヘッダー（t_buf構造体を追加）
-get_next_line_bonus.c        ← ft_getc（複数fd対応版）/ ft_putc / get_next_line
-get_next_line_utils_bonus.c  ← ft_memcpy（通常版と同じ内容）
+GET_NEXT_LINE/
+├── get_next_line.c              # 必須課題本体
+├── get_next_line.h
+├── get_next_line_utils.c        # ft_memcpyなどのユーティリティ
+├── get_next_line_bonus.c        # ボーナス課題（複数fd対応版）
+├── get_next_line_bonus.h
+├── get_next_line_utils_bonus.c
+├── main.c                       # 動作確認用
+└── test.txt                     # テスト用サンプルファイル
 ```
 
-***
+## 実装のポイント
 
-## 実装設計
+この関数は、1文字ずつファイルから取得する `ft_getc` と、
+取得した文字を1文字ずつ格納していく `ft_putc` の2つの関数を組み合わせて
+1行分の文字列を組み立てています。
 
-複雑な分岐を避けるため、2つの小さな関数を組み合わせる設計にしています。
+`get_next_line` はこの2つの関数を交互に呼び出し、改行 (`\n`) が出てくるまで
+「1文字取得 → 格納」を繰り返し、最終的に1行分の文字列を完成させます。
 
-### ft_getc — バッファリング付き1文字読み込み
+### ft_getc（1文字を取得する関数）
 
-staticバッファが空になったときだけ `read` を呼び出し、最大 `BUFFER_SIZE` バイトを一度に取得します。これによりシステムコールのオーバーヘッドを削減しつつ、ロジックをシンプルに保ちます。
+ファイルから1文字ずつ返す関数です。ただし、1文字ごとに毎回 `read()` を
+呼ぶと処理が遅くなるため、`BUFFER_SIZE` 個分をまとめて先読みしておき、
+そこから1文字ずつ取り出す仕組みになっています。
 
-```c
-int ft_getc(int fd);  // 次の1文字を返す。終端・エラーならEOF
-```
+- `buf` : 先読みした文字を一時的に保持する配列（バッファ）
+- `n` : バッファ内にまだ取り出していない文字が何個残っているか
+- `idx` : バッファ内で次に取り出すべき文字の位置
 
-### ft_putc — 動的文字列ビルダー
+バッファの中身を使い切ったら（`n` が0になったら）、再度 `read()` で
+次の `BUFFER_SIZE` 個分を読み込みます。
 
-`t_string` 構造体に1文字ずつ追記します。バッファが足りなくなったらcapaを2倍にして再確保するため、長さNの行に対して再確保はO(log2(N))回で済みます。
+具体例（BUFFER_SIZE = 4、ファイルの中身が "abcdefg\n" の場合）：
 
-```c
-typedef struct s_string {
-    unsigned char   *str;   // 文字列
-    size_t          len;    // 文字列の長さ
-    size_t          capa;   // 確保済み領域のサイズ
-}   t_string;
+\`\`\`
+1回目のread()  → buf = [a][b][c][d] を読み込み
+呼び出し1回目 → 'a' を返す
+呼び出し2回目 → 'b' を返す
+呼び出し3回目 → 'c' を返す
+呼び出し4回目 → 'd' を返す（ここでbufを使い切る）
 
-***
+2回目のread() → buf = [e][f][g][\n] を読み込み
+呼び出し5回目 → 'e' を返す
+...
+\`\`\`
 
-## 使い方
+### ft_putc（1文字を格納する関数）
 
-### 通常版
+`ft_getc` が取得した文字を、`t_string` 構造体に1文字ずつ格納していく関数です。
 
-```c
-#include "get_next_line.h"
-#include <fcntl.h>
-#include <stdio.h>
+`t_string` の容量（`capa`）が不足した場合、`malloc` で現在の2倍の
+サイズを再確保し、既存のデータをコピーしてから新しい文字を追加します。
+これにより、行の長さが事前に分からなくても対応できます。
 
-int main(void)
-{
-    int     fd;
-    char    *line;
+\`\`\`
+初期容量: 42バイト
+容量が不足 → 84バイトに再確保
+さらに不足 → 168バイトに再確保（以降も倍々に拡張）
+\`\`\`
 
-    fd = open("file.txt", O_RDONLY);
-    while (1)
-    {
-        line = get_next_line(fd);
-        if (line == NULL)
-            break ;
-        printf("%s", line);
-        free(line);
-    }
-    close(fd);
-    return (0);
-}
-```
+### get_next_line（処理全体の流れ）
 
-### ボーナス版（複数fd同時読み込み）
+`ft_getc` と `ft_putc` を交互に呼び出しながら、以下の手順で
+1行分の文字列を組み立てます。
 
-```c
-#include "get_next_line_bonus.h"
-#include <fcntl.h>
-#include <stdio.h>
+1. `ft_getc` で1文字取得する
+2. 取得した文字を `ft_putc` で `t_string` に格納する
+3. 取得した文字が `\n` の場合、1行分の読み込みが完了したためループを終了する
+4. ファイルの終端に達した場合、またはエラーが発生した場合もループを終了する
 
-int main(void)
-{
-    int     fd1;
-    int     fd2;
-    char    *line;
+### エラーと終端の区別
 
-    fd1 = open("test1.txt", O_RDONLY);
-    fd2 = open("test2.txt", O_RDONLY);
+読み込みが終了する理由には「ファイルの終端に達した（正常）」場合と
+「read() が失敗した（異常）」場合の2種類があるため、それぞれ別の値で
+区別しています。
 
-    line = get_next_line(fd1); printf("fd1: %s", line); free(line);
-    line = get_next_line(fd2); printf("fd2: %s", line); free(line);
-    line = get_next_line(fd1); printf("fd1: %s", line); free(line);
-    line = get_next_line(fd2); printf("fd2: %s", line); free(line);
-
-    close(fd1);
-    close(fd2);
-    return (0);
-}
-```
-
-***
-
-## コンパイル
-
-### 通常版
-
-```bash
-cc -Wall -Wextra -Werror -D BUFFER_SIZE=42 get_next_line.c get_next_line_utils.c main.c -o gnl && ./gnl
-```
-
-### ボーナス版
-
-```bash
-cc -Wall -Wextra -Werror -D BUFFER_SIZE=42 get_next_line_bonus.c get_next_line_utils_bonus.c main.c -o gnl_bonus && ./gnl_bonus
-```
-
-***
-
-## 設計上の判断
-
-| 判断ポイント | 選択 | 理由 |
+| 値 | 名前 | 意味 |
 |---|---|---|
-| readバッファの置き場所 | スタック領域（`buf[BUFFER_SIZE]`） | readバッファにmallocは不要 |
-| 行データの置き場所 | ヒープ領域（動的 `t_string`） | 行の長さはコンパイル時に不明 |
-| capa増加方式 | オーバー時に2倍 | 再確保がO(log2(N))回 |
-| メモリ vs 速度 | 速度優先（返却前に縮小しない） | 余分なmalloc/memcpyを避ける |
+| -1 | `EOF` | ファイルの終端に達した（正常終了） |
+| -2 | `GNL_ERR` | read() が失敗した（異常終了） |
 
-***
+## t_string構造体
 
-## 注意事項
+\`\`\`c
+typedef struct s_string
+{
+    unsigned char *str;   // 文字列本体
+    size_t        len;    // 現在格納されている文字数
+    size_t        capa;   // 確保されている容量
+}   t_string;
+\`\`\`
 
-- 機械採点対策として `sizeof(buf)` ではなく `BUFFER_SIZE` を `read` の引数に使うこと
-- static変数はC言語仕様により0またはNULLに自動初期化される（ISO/IEC 9899 §6.7.8）
-- エラー発生時は途中まで構築した `ret.str` を必ず `free` してメモリリークを防ぐこと
-- ボーナス版のファイル名は必ず `_bonus` サフィックスをつけること（42の採点ルール）
+`len`（現在の文字数）が `capa`（確保済み容量）に達するたびに、
+容量を2倍にして再確保する可変長バッファです。初期容量は42バイトで、
+必要に応じて84バイト、168バイトと自動的に拡張されます。
+## 必須課題とボーナス課題の違い
 
-***
+| 項目 | 必須課題 | ボーナス課題 |
+|---|---|---|
+| 対応fd数 | 1つのみ | 複数（`OPEN_MAX`まで） |
+| static変数 | `buf`, `n`, `idx` を単体で保持 | `t_buf bufs[OPEN_MAX]` の配列でfdごとに保持 |
+| ヘッダー | get_next_line.h | get_next_line_bonus.h |
+| 追加定義 | なし | `OPEN_MAX` (1024) |
 
-## バッファサイズについて
+ボーナス版では `t_buf` 構造体（`buf`, `idx`, `n`）をfdの数だけ配列として持つことで、
+異なるfdを交互に読み込んでも、それぞれの読み込み位置が独立して保持されます。
 
-`read` 時のバッファリングは **4096バイト以上に上げてもパフォーマンス向上はほぼない**とされています（『Linuxプログラミングインターフェース』表13-1より）。また逆に巨大すぎるバッファサイズはCPUキャッシュが効かなくなり、速度が落ちる場合もあります。
+## コンパイル方法
 
-***
+\`\`\`bash
+# 必須課題
+gcc -Wall -Wextra -Werror -D BUFFER_SIZE=42 get_next_line.c get_next_line_utils.c main.c -o gnl
+
+# ボーナス課題
+gcc -Wall -Wextra -Werror -D BUFFER_SIZE=42 get_next_line_bonus.c get_next_line_utils_bonus.c main.c -o gnl_bonus
+\`\`\`
+
+`BUFFER_SIZE` はコンパイル時に自由に指定可能で、値の大小に関わらず
+正しく1行ずつ読み込めることが本課題の評価ポイントです。
+
 
 ### 参考文献
 
--
-- 42 Tokyo ft_printf subject
-- B.W.カーニハン / D.M.リッチー, 『プログラミング言語C 第2版』, p.209–210
+- 1時間で書くGet Next Line(GNL)(https://zenn.dev/grigri_grin/articles/bf45a9fa50f25f)
+- 42 Tokyo get_next_line subject
 
 ### AI の使用について
 
-AI（Perplexity）をデバッグ・概念理解・コードレビュー・Makefile 作成の補助として使用しました。構文エラーの特定や `va_list` の使い方の確認などに活用しました。
+AIをデバッグ・概念理解・コードレビューの補助として使用しました。
+

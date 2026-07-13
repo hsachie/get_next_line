@@ -6,14 +6,13 @@
 /*   By: hsachie <hsachie@student.42.jp>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/29 12:44:33 by hsachie           #+#    #+#             */
-/*   Updated: 2026/07/13 18:38:08 by hsachie          ###   ########.fr       */
+/*   Updated: 2026/07/13 19:00:00 by hsachie          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef GET_NEXT_LINE_BONUS_H
 # define GET_NEXT_LINE_BONUS_H
 
-# include <limits.h>
 # include <stdlib.h>
 # include <unistd.h>
 
@@ -22,11 +21,11 @@
 # endif
 
 # ifndef EOF
-#  define EOF -1
+#  define EOF (-1)
 # endif
 
 # ifndef GNL_ERR
-#  define GNL_ERR -2
+#  define GNL_ERR (-2)
 # endif
 
 # ifndef OPEN_MAX
@@ -35,7 +34,7 @@
 
 typedef struct s_buf
 {
-	unsigned char	buf[BUFFER_SIZE];
+	unsigned char	*buf;
 	int				idx;
 	int				n;
 }					t_buf;

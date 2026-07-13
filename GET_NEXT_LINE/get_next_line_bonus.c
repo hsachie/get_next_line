@@ -6,56 +6,52 @@
 /*   By: hsachie <hsachie@student.42.jp>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/29 12:44:00 by hsachie           #+#    #+#             */
-/*   Updated: 2026/07/07 22:40:00 by hsachie          ###   ########.fr       */
+/*   Updated: 2026/07/13 19:00:00 by hsachie          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line_bonus.h"
 
+static void	clear_buf(t_buf *b)
+{
+	free(b->buf);
+	b->buf = NULL;
+	b->idx = 0;
+	b->n = 0;
+}
+
+static int	fill_buf(t_buf *b, int fd)
+{
+	if (b->buf == NULL)
+	{
+		b->buf = malloc(BUFFER_SIZE);
+		if (b->buf == NULL)
+			return (GNL_ERR);
+	}
+	b->n = read(fd, b->buf, BUFFER_SIZE);
+	b->idx = 0;
+	if (b->n < 0)
+		return (clear_buf(b), GNL_ERR);
+	if (b->n == 0)
+		return (clear_buf(b), EOF);
+	return (0);
+}
+
 int	ft_getc(int fd)
 {
 	static t_buf	bufs[OPEN_MAX];
+	int				status;
 
 	if (fd < 0 || fd >= OPEN_MAX)
 		return (EOF);
 	if (bufs[fd].n <= 0)
 	{
-		bufs[fd].n = read(fd, bufs[fd].buf, BUFFER_SIZE);
-		bufs[fd].idx = 0;
-		if (bufs[fd].n < 0)
-		{
-			bufs[fd].n = 0;
-			return (GNL_ERR);
-		}
-		if (bufs[fd].n == 0)
-			return (EOF);
+		status = fill_buf(&bufs[fd], fd);
+		if (status != 0)
+			return (status);
 	}
 	bufs[fd].n--;
 	return ((unsigned char)bufs[fd].buf[bufs[fd].idx++]);
-}
-
-int	ft_putc(t_string *str, unsigned char c)
-{
-	size_t			new_capa;
-	unsigned char	*new_str;
-
-	if (str->len + 1 >= str->capa)
-	{
-		if (str->capa == 0)
-			new_capa = 42;
-		else
-			new_capa = str->capa * 2;
-		new_str = malloc(new_capa);
-		if (new_str == NULL)
-			return (free(str->str), -1);
-		if (str->len > 0)
-			ft_memcpy(new_str, str->str, str->len);
-		free(str->str);
-		str->str = new_str;
-		str->capa = new_capa;
-	}
-	str->str[str->len++] = c;
-	return (0);
 }
 
 char	*get_next_line(int fd)

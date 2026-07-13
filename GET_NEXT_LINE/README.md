@@ -118,12 +118,41 @@ typedef struct s_string
 | 項目 | 必須課題 | ボーナス課題 |
 |---|---|---|
 | 対応fd数 | 1つのみ | 複数（`OPEN_MAX`まで） |
-| static変数 | `buf`, `n`, `idx` を単体で保持 | `t_buf bufs[OPEN_MAX]` の配列でfdごとに保持 |
+| static変数 | `buf`, `n`, `idx` を単体で保持 | `t_buf bufs[OPEN_MAX]` の配列（staticは1個） |
+| バッファの持ち方 | `buf` を固定長配列で保持 | `buf` はポインタで保持し、実体は`malloc`で確保 |
 | ヘッダー | get_next_line.h | get_next_line_bonus.h |
 | 追加定義 | なし | `OPEN_MAX` (1024) |
 
 ボーナス版では `t_buf` 構造体（`buf`, `idx`, `n`）をfdの数だけ配列として持つことで、
 異なるfdを交互に読み込んでも、それぞれの読み込み位置が独立して保持されます。
+
+#### バッファをmallocで持つ理由
+
+ボーナス版で気をつけたのは、各fdの読み込みバッファ `buf` を
+**固定長配列ではなくポインタにして、必要になったときだけ `malloc` する**点です。
+
+仮に `unsigned char buf[BUFFER_SIZE]` を構造体に直接埋め込むと、
+それを `OPEN_MAX`（1024）個ぶん配列で持つことになります。
+このとき `BUFFER_SIZE` が非常に大きい値（例：10,000,000）だと、
+`10,000,000 × 1024 ≒ 約10GB` を一度に確保しようとして
+プログラムが強制終了（Killed）されてしまいます。
+
+そこで、`buf` はポインタとして宣言し、そのfdを最初に読み込むタイミングで
+`malloc(BUFFER_SIZE)` し、読み終わり（EOF）やエラー発生時に `free` して
+`NULL` に戻すようにしました。これにより、実際に確保されるメモリは
+**「同時に開いているfdの数 × BUFFER_SIZE」** だけで済み、
+`BUFFER_SIZE` がどれだけ大きくてもメモリを使いすぎず正しく動作します。
+
+```c
+typedef struct s_buf
+{
+    unsigned char *buf;   // 読み込みバッファ（実体はmallocで確保）
+    int           idx;    // 次に取り出す位置
+    int           n;      // バッファ内の残り文字数
+}   t_buf;
+
+static t_buf bufs[OPEN_MAX];  // staticはこの1個だけ
+```
 
 ## コンパイル方法
 

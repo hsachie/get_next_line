@@ -6,7 +6,7 @@
 /*   By: hsachie <hsachie@student.42.jp>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/29 12:44:00 by hsachie           #+#    #+#             */
-/*   Updated: 2026/07/13 19:00:00 by hsachie          ###   ########.fr       */
+/*   Updated: 2026/07/14 12:23:11 by hsachie          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,30 @@ static int	fill_buf(t_buf *b, int fd)
 		return (clear_buf(b), GNL_ERR);
 	if (b->n == 0)
 		return (clear_buf(b), EOF);
+	return (0);
+}
+
+int	ft_putc(t_string *str, unsigned char c)
+{
+	size_t			new_capa;
+	unsigned char	*new_str;
+
+	if (str->len + 1 >= str->capa)
+	{
+		if (str->capa == 0)
+			new_capa = 42;
+		else
+			new_capa = str->capa * 2;
+		new_str = malloc(new_capa);
+		if (new_str == NULL)
+			return (free(str->str), -1);
+		if (str->len > 0)
+			ft_memcpy(new_str, str->str, str->len);
+		free(str->str);
+		str->str = new_str;
+		str->capa = new_capa;
+	}
+	str->str[str->len++] = c;
 	return (0);
 }
 

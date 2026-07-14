@@ -158,10 +158,10 @@ static t_buf bufs[OPEN_MAX];  // staticはこの1個だけ
 
 \`\`\`bash
 # 必須課題
-gcc -Wall -Wextra -Werror -D BUFFER_SIZE=42 get_next_line.c get_next_line_utils.c main.c -o gnl
+cc -Wall -Wextra -Werror -D BUFFER_SIZE=42 get_next_line.c get_next_line_utils.c main.c -o gnl
 
 # ボーナス課題
-gcc -Wall -Wextra -Werror -D BUFFER_SIZE=42 get_next_line_bonus.c get_next_line_utils_bonus.c main.c -o gnl_bonus
+cc -Wall -Wextra -Werror -D BUFFER_SIZE=42 get_next_line_bonus.c get_next_line_utils_bonus.c main.c -o gnl_bonus
 \`\`\`
 
 `BUFFER_SIZE` はコンパイル時に自由に指定可能で、値の大小に関わらず
